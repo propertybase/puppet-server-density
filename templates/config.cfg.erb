@@ -6,9 +6,9 @@ agent_key: <%= agent_key %>
 <%= option %>
 <% end -%>
 
-<% plugins.keys.each do |plugin| -%>
-[<%= plugins[plugin]['name'] %>]
-<% plugins[plugin]['options'].each do |option| -%>
+<% plugins.each do |plugin| -%>
+[<%= plugin['name'] %>]
+<% plugin['options'].each do |option| -%>
 <%= option %>
 <% end -%>
 <% end -%>
