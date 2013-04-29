@@ -17,6 +17,7 @@
 #  }
 #
 class serverdensity (
+	$subdomain,
 	$agent_key = undef,
 	$options = [],
 	$plugins = {}
