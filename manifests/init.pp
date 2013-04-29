@@ -11,44 +11,44 @@
 #  - Installs and configures the Server Density monitoring agent, sd-agent
 #
 # Sample Usage (Monitoring MongoDB):
-#  include serverdensity
-#
-#  serverdensity::config { "server-density-subdomain":
+#  serverdensity { "server-density-subdomain":
 #    agent_key => "b82e833n4o9h189a352k8ds67725g3jy",
 #    options => ["mongodb_server: localhost"],
 #  }
 #
-class serverdensity {
-	define config ( $agent_key, $options=[""] ) {
-		exec { "server-density-apt-key":
-			path => "/bin:/usr/bin",
-			command => "wget http://www.serverdensity.com/downloads/boxedice-public.key -O - | apt-key add -",
-			unless => "apt-key list | grep -i boxedice",
-		}
+class serverdensity (
+	$agent_key = undef,
+	$options = [],
+	$plugins = {}
+){
+	include apt
 
-		exec { "server-density-apt-list":
-			path => "/bin:/usr/bin",
-			command => "echo 'deb http://www.serverdensity.com/downloads/linux/debian lenny main' >> /etc/apt/sources.list;apt-get update",
-			unless => "cat /etc/apt/sources.list | grep -i serverdensity",
-			require => Exec["server-density-apt-key"],
-		}
+	apt::source { 'serverdensity':
+    location    => 'http://www.serverdensity.com/downloads/linux/deb',
+    release     => 'all',
+    repos       => 'main',
+    key         => '7F0CEB10',
+    key_source  => 'https://www.serverdensity.com/downloads/boxedice-public.key',
+    include_src => false,
+  }
 
-		package { "sd-agent":
-			ensure => installed,
-			require => Exec["server-density-apt-list"],
-		}
-
-		file { "/etc/sd-agent/config.cfg":
-			content => template("serverdensity/config.cfg.erb"),
-			mode => "0644",
-			require => Package["sd-agent"],
-		}
-		
-		service { "sd-agent":
-			ensure => running,
-			enable => true,
-			subscribe => Package["sd-agent"],
-			require => File["/etc/sd-agent/config.cfg"],
-		}
+  package { "sd-agent":
+		ensure => installed,
 	}
+
+	file { "/etc/sd-agent/config.cfg":
+		content => template("serverdensity/config.cfg.erb"),
+		mode => "0644",
+	}
+
+	service { "sd-agent":
+		ensure => running,
+		enable => true,
+	}
+
+	Apt::Source['serverdensity'] -> Package['sd-agent']
+	Package['sd-agent'] -> File['/etc/sd-agent/config.cfg']
+	File['/etc/sd-agent/config.cfg'] -> Service['sd-agent']
+	File['/etc/sd-agent/config.cfg'] ~> Service['sd-agent']
+	Package['sd-agent'] ~> Service['sd-agent']
 }
