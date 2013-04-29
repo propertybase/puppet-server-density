@@ -10,17 +10,29 @@
 #  - Adds to the apt repository list
 #  - Installs and configures the Server Density monitoring agent, sd-agent
 #
-# Sample Usage (Monitoring MongoDB):
-#  serverdensity { "server-density-subdomain":
-#    agent_key => "b82e833n4o9h189a352k8ds67725g3jy",
-#    options => ["mongodb_server: localhost"],
-#  }
-#
+# Sample Usage:
+# class { 'serverdensity':
+#   subdomain   => 'propertybase',
+#   agent_key   => $::serverdensity_keys[$hostname],
+#   options     => [
+#     'plugin_directory: /usr/bin/sd-agent/plugins',
+#     'mongodb_dbstats: yes'
+#   ],
+#   plugins     => [
+#     {
+#       'name'    => 'ElasticSearch',
+#       'options' => [
+#         'host: localhost:9200'
+#       ]
+#     }
+#   ],
+# }
+
 class serverdensity (
 	$subdomain,
 	$agent_key = undef,
 	$options = [],
-	$plugins = {}
+	$plugins = []
 ){
 	include apt
 
