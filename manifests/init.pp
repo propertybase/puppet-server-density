@@ -34,15 +34,30 @@ class serverdensity (
 	$options = [],
 	$plugins = []
 ){
-	include apt
 
-	apt::source { 'serverdensity':
-    location    => 'http://www.serverdensity.com/downloads/linux/deb',
-    release     => 'all',
-    repos       => 'main',
-    key         => '7F0CEB10',
-    key_source  => 'https://www.serverdensity.com/downloads/boxedice-public.key',
-    include_src => false,
+	case $::osfamily {
+    'RedHat': {
+      yumrepo { 'serverdensity':
+        baseurl => "http://www.serverdensity.com/downloads/linux/redhat/",
+        descr => "Server Density",
+        enabled => "1",
+        gpgkey => "https://www.serverdensity.com/downloads/boxedice-public.key",
+      }
+      Yumrepo['serverdensity'] -> Package['sd-agent']
+    }
+
+    'Debian': {
+      include apt
+      apt::source { 'serverdensity':
+        location    => 'http://www.serverdensity.com/downloads/linux/deb',
+        release     => 'all',
+        repos       => 'main',
+        key         => '7F0CEB10',
+        key_source  => 'https://www.serverdensity.com/downloads/boxedice-public.key',
+        include_src => false,
+      }
+      Apt::Source['serverdensity'] -> Package['sd-agent']
+    }
   }
 
   package { "sd-agent":
@@ -59,7 +74,6 @@ class serverdensity (
 		enable => true,
 	}
 
-	Apt::Source['serverdensity'] -> Package['sd-agent']
 	Package['sd-agent'] -> File['/etc/sd-agent/config.cfg']
 	File['/etc/sd-agent/config.cfg'] -> Service['sd-agent']
 	File['/etc/sd-agent/config.cfg'] ~> Service['sd-agent']
